@@ -1,0 +1,9 @@
+{
+  "name": "create",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Genuary 2024 sketches",
+  "scripts": {
+    "serve": "npx http-server -p 8080"
+  }
+}
