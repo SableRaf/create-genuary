@@ -7,8 +7,8 @@
 
 import { join, resolve } from 'path';
 import { access } from 'fs/promises';
-import { fetchPrompts } from './lib/prompts.js';
-import { scaffoldProject } from './lib/scaffold.js';
+import { fetchPrompts } from './src/prompts.js';
+import { scaffoldProject } from './src/scaffold.js';
 
 // ANSI color codes
 const colors = {

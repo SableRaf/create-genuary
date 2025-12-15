@@ -1,8 +1,9 @@
 {
-  "name": "create",
+  "name": "genuary-{{year}}-sketches-{{yourName}}",
   "version": "1.0.0",
   "private": true,
-  "description": "Genuary 2024 sketches",
+  "description": "Genuary {{year}} sketches",
+  "author": "{{Your Name}}",
   "scripts": {
     "serve": "npx http-server -p 8080",
     "dev": "npx http-server -p 8080 -o -c-1 --watch"
