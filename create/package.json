@@ -4,6 +4,7 @@
   "private": true,
   "description": "Genuary 2024 sketches",
   "scripts": {
-    "serve": "npx http-server -p 8080"
+    "serve": "npx http-server -p 8080",
+    "dev": "npx http-server -p 8080 -o -c-1 --watch"
   }
 }
