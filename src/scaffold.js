@@ -8,6 +8,7 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
 import { getSketchName } from './prompts.js';
+import { colors, log, success, info, error } from './utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

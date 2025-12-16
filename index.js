@@ -5,23 +5,11 @@
  * Scaffold a complete Genuary project with all daily p5.js sketches
  */
 
-import { join, resolve } from 'path';
+import { resolve } from 'path';
 import { access } from 'fs/promises';
 import { fetchPrompts } from './src/prompts.js';
 import { scaffoldProject } from './src/scaffold.js';
 import { colors, log } from './src/utils.js';
-
-function success(message) {
-  log(`✓ ${message}`, colors.green);
-}
-
-function info(message) {
-  log(message, colors.blue);
-}
-
-function error(message) {
-  log(`✗ ${message}`, colors.red);
-}
 
 function parseArguments() {
   const args = process.argv.slice(2);
@@ -29,19 +17,27 @@ function parseArguments() {
   let folder = null;
   let year = new Date().getFullYear();
   let p5Version = 'latest';
+  let yearProvided = false;
 
   // Parse arguments
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
     if (arg === '--year') {
+      yearProvided = true;
       const yearValue = args[++i];
       if (!yearValue) {
         throw new Error('--year requires a value');
       }
       const parsedYear = parseInt(yearValue);
-      if (isNaN(parsedYear) || yearValue.length !== 4) {
+      if (isNaN(parsedYear) || parsedYear < 1000 || parsedYear > 9999) {
         throw new Error(`Invalid year: ${yearValue}. Must be a 4-digit number.`);
+      }
+      if (parsedYear < 2021) {
+        throw new Error(`Invalid year: ${yearValue}. Genuary started in 2021.`);
+      }
+      if (parsedYear > new Date().getFullYear() + 1) {
+        throw new Error(`Invalid year: ${yearValue}. You can not be that far in the future.`);
       }
       year = parsedYear;
     } else if (arg === '--p5-version') {
@@ -66,12 +62,7 @@ function parseArguments() {
     }
   }
 
-  // Set default folder name if not provided
-  if (!folder) {
-    folder = `genuary-${year}`;
-  }
-
-  return { folder, year, p5Version };
+  return { folder, year, p5Version, yearProvided };
 }
 
 async function checkNodeVersion() {
@@ -102,8 +93,7 @@ async function main() {
     await checkNodeVersion();
 
     // Parse arguments
-    const { folder, year, p5Version } = parseArguments();
-    const projectPath = resolve(process.cwd(), folder);
+    const { folder, year, p5Version, yearProvided } = parseArguments();
 
     // Display header
     console.log();
@@ -112,23 +102,26 @@ async function main() {
     log('╚═══════════════════════════════════════╝', colors.blue);
     console.log();
 
-    info(`Creating Genuary ${year} project in: ${folder}/`);
+    log('Fetching prompts from genuary.art...', colors.gray);
+    const { prompts, year: promptsYear } = yearProvided ? await fetchPrompts(year) : await fetchPrompts();
+    const projectYear = yearProvided ? year : promptsYear;
+    const folderName = folder || `genuary-${projectYear}`;
+    const projectPath = resolve(process.cwd(), folderName);
+
+    success(`Fetched ${prompts.length} prompts from genuary.art`);
+    console.log();
+
+    info(`Creating Genuary ${projectYear} project in: ${folderName}/`);
     info(`p5.js version: ${p5Version}`);
     console.log();
 
     // Check if folder already exists
     if (await checkFolderExists(projectPath)) {
       throw new Error(
-        `Folder "${folder}" already exists.\n` +
+        `Folder "${folderName}" already exists.\n` +
         `Please choose a different folder name or remove the existing folder.`
       );
     }
-
-    // Fetch prompts
-    log('Fetching prompts from genuary.art...', colors.gray);
-    const prompts = await fetchPrompts(year);
-    success(`Fetched ${prompts.length} prompts from genuary.art`);
-    console.log();
 
     // Scaffold project
     log('Creating project structure...', colors.gray);
@@ -138,8 +131,8 @@ async function main() {
 
     await scaffoldProject(
       projectPath,
-      folder,
-      year,
+      folderName,
+      projectYear,
       prompts,
       p5Version,
       (sketchName, index, total) => {
@@ -155,12 +148,12 @@ async function main() {
     // Display next steps
     log('Next steps:', colors.blue);
     console.log();
-    log(`  cd ${folder}`, colors.gray);
+    log(`  cd ${folderName}`, colors.gray);
     log(`  open index.html`, colors.gray);
     console.log();
     log('Or start a local server:', colors.blue);
     console.log();
-    log(`  cd ${folder}`, colors.gray);
+    log(`  cd ${folderName}`, colors.gray);
     log(`  npm run serve`, colors.gray);
     console.log();
     log('Happy coding! 🎨', colors.green);

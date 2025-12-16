@@ -13,3 +13,15 @@ const colors = {
 function log(message, color = '') {
   console.log(color + message + colors.reset);
 }
+
+function success(message) {
+  log(`✓ ${message}`, colors.green);
+}
+
+function info(message) {
+  log(message, colors.blue);
+}
+
+function error(message) {
+  log(`✗ ${message}`, colors.red);
+}

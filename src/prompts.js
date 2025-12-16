@@ -2,20 +2,22 @@
  * Fetch and validate Genuary prompts from genuary.art
  */
 
-import { colors, log } from './utils.js';
+import { colors, log, success, info, error } from './utils.js';
 
 export async function fetchPrompts(year) {
-  const url = `https://genuary.art/${year}/prompts.json`;
+  const url = year
+    ? `https://genuary.art/${year}/prompts.json`
+    : `https://genuary.art/prompts.json`;
 
   try {
     const response = await fetch(url);
 
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error(
-          `Prompts for ${year} not found. The year may not be available yet.\n` +
-          `Try a different year or check https://genuary.art`
-        );
+        const msg = year
+          ? `Prompts for ${year} not found. The year may not be available yet.`
+          : 'Prompts not found. The requested prompts may not be available yet.';
+        throw new Error(`${msg}\nTry --year <year> to specify a year or check https://genuary.art`);
       }
       throw new Error(`Failed to fetch prompts: ${response.status} ${response.statusText}`);
     }
@@ -25,7 +27,9 @@ export async function fetchPrompts(year) {
     if (!data.year) {
       throw new Error('Invalid prompts format: missing "year" key');
     } else {
-      log(`Fetched prompts for year: ${data.year}`, colors.gray);
+      console.log();
+      console.log(`Fetched prompts for year: ${data.year}`, colors.gray);
+      console.log();
     }
 
     // Validate schema
@@ -73,7 +77,10 @@ export async function fetchPrompts(year) {
       }
     }
 
-    return prompts;
+    return {
+      year: data.year,
+      prompts
+    };
 
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
