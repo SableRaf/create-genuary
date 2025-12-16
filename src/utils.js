@@ -7,7 +7,8 @@ const colors = {
   blue: '\x1b[34m',
   yellow: '\x1b[33m',
   red: '\x1b[31m',
-  gray: '\x1b[90m'
+  gray: '\x1b[90m',
+  pink: '\x1b[35m'
 };
 
 function log(message, color = '') {

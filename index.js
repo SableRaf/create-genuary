@@ -176,7 +176,7 @@ async function main() {
     // Display next steps
     log('Next steps:', colors.blue);
     console.log();
-    log('Start a local server:', colors.blue);
+    log('Start a local server:', colors.pink);
     console.log();
     log(`  cd ${folderName}`, colors.gray);
     log(`  npm run serve`, colors.gray);
