@@ -2,6 +2,8 @@
  * Fetch and validate Genuary prompts from genuary.art
  */
 
+import { colors, log } from './utils.js';
+
 export async function fetchPrompts(year) {
   const url = `https://genuary.art/${year}/prompts.json`;
 
