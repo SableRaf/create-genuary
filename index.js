@@ -9,7 +9,7 @@ import { resolve } from 'path';
 import { access } from 'fs/promises';
 import { fetchPrompts } from './src/prompts.js';
 import { scaffoldProject } from './src/scaffold.js';
-import { colors, log } from './src/utils.js';
+import { colors, log, success, info, error } from './src/utils.js';
 
 function parseArguments() {
   const args = process.argv.slice(2);
