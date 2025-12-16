@@ -18,6 +18,7 @@ function parseArguments() {
   let year = new Date().getFullYear();
   let p5Version = 'latest';
   let yearProvided = false;
+  let gitRepo = null;
 
   // Parse arguments
   for (let i = 0; i < args.length; i++) {
@@ -53,6 +54,12 @@ function parseArguments() {
         );
       }
       p5Version = versionValue;
+    } else if (arg === '--git') {
+      const repoValue = args[++i];
+      if (!repoValue) {
+        throw new Error('--git requires a repository argument, e.g. "user/repo"');
+      }
+      gitRepo = repoValue;
     } else if (arg === '--' || arg.startsWith('--')) {
       // Skip npm's separator or unknown flags
       continue;
@@ -62,7 +69,7 @@ function parseArguments() {
     }
   }
 
-  return { folder, year, p5Version, yearProvided };
+  return { folder, year, p5Version, yearProvided, gitRepo };
 }
 
 async function checkNodeVersion() {
@@ -93,7 +100,7 @@ async function main() {
     await checkNodeVersion();
 
     // Parse arguments
-    const { folder, year, p5Version, yearProvided } = parseArguments();
+    const { folder, year, p5Version, yearProvided, gitRepo } = parseArguments();
 
     // Display header
     console.log();
@@ -113,6 +120,9 @@ async function main() {
 
     info(`Creating Genuary ${projectYear} project in: ${folderName}/`);
     info(`p5.js version: ${p5Version}`);
+    if (gitRepo) {
+      info(`Template source: ${gitRepo}`);
+    }
     console.log();
 
     // Check if folder already exists
@@ -135,6 +145,7 @@ async function main() {
       projectYear,
       prompts,
       p5Version,
+      gitRepo,
       (sketchName, index, total) => {
         currentSketch = index;
         log(`  [${index}/${total}] ${sketchName}`, colors.gray);
