@@ -20,6 +20,12 @@ export async function fetchPrompts(year) {
 
     const data = await response.json();
 
+    if (!data.year) {
+      throw new Error('Invalid prompts format: missing "year" key');
+    } else {
+      log(`Fetched prompts for year: ${data.year}`, colors.gray);
+    }
+
     // Validate schema
     if (!data.genuaryPrompts) {
       throw new Error('Invalid prompts format: missing "genuaryPrompts" key');
