@@ -93,6 +93,7 @@ genuary-2025/
 │   └── ...                     # (31 total sketches)
 ├── index.html                  # Gallery view of all sketches
 ├── config.json                 # Project configuration (title, artist name, etc.)
+├── prompts.json                # Cached prompts used by the gallery
 ├── README.md                   # Project documentation with prompt list
 ├── package.json                # Basic package manifest (includes server script)
 └── .gitignore                  # Standard ignores
@@ -104,7 +105,7 @@ The generated project includes an `index.html` file that serves as an interactiv
 
 ### Configuration
 
-The generated folder includes a `config.json` file in the project root. Edit this file to set your name, override the gallery title, or tweak other presentation settings without touching `index.html`. Browsers block loading JSON when a page is opened straight from the filesystem, so make sure to start a local server (e.g. `npm run serve`) to see your configuration changes in the gallery.
+The generated folder includes a `config.json` file in the project root. Edit this file to set your name, override the gallery title, or tweak other presentation settings without touching `index.html`. The gallery also ships with a `prompts.json` file so the HTML bundle stays light and can be updated independently of the UI. Browsers block loading JSON when a page is opened straight from the filesystem, so make sure to start a local server (e.g. `npm run serve`) to see changes coming from `config.json` or `prompts.json`.
 
 ## Requirements
 

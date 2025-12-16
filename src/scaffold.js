@@ -2,15 +2,13 @@
  * Scaffold the Genuary project
  */
 
-import { mkdir, writeFile, access, readFile, cp, mkdtemp, rm } from 'fs/promises';
-import { join, dirname, basename } from 'path';
+import { mkdir, writeFile, access, cp, mkdtemp, rm } from 'fs/promises';
+import { join, basename } from 'path';
 import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
 import { getSketchName } from './prompts.js';
-import { colors, log, success, info, error } from './utils.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { colors, log, success, info, error, warn } from './utils.js';
+import { renderPromptsFile } from './templateRenderer.js';
 
 /**
  * Create a directory if it doesn't exist
@@ -60,6 +58,7 @@ function runCommand(command, args, options = {}) {
 }
 
 const IGNORED_TEMPLATE_DIRS = new Set(['node_modules', '.git']);
+const REMOTE_TEMPLATE_REPO = 'sableRaf/genuary-gallery-templates';
 
 /**
  * Clone a template project using degit
@@ -69,6 +68,22 @@ async function cloneFromGit(repo, destinationDirName, cwd) {
     cwd,
     silent: false
   });
+}
+
+/**
+ * Clone the gallery template from GitHub
+ */
+async function cloneGalleryTemplate(projectPath) {
+  try {
+    info('Downloading gallery template...');
+    await cloneFromGit(`${REMOTE_TEMPLATE_REPO}/templates/default`, '.', projectPath);
+    success('Gallery template downloaded');
+    return true;
+  } catch (error) {
+    warn('Could not clone gallery template from GitHub');
+    warn(`Reason: ${error.message}`);
+    return false;
+  }
 }
 
 /**
@@ -198,108 +213,12 @@ export async function generateSketches(projectPath, prompts, p5Version, gitRepo,
 }
 
 /**
- * Generate the gallery view (index.html)
+ * Generate prompts.json for runtime loading
  */
-export async function generateGallery(projectPath, year, prompts) {
-  const templatePath = join(__dirname, 'templates', 'index.html.template');
-  let template = await readFile(templatePath, 'utf-8');
-
-  // Prepare sketches data
-  const sketchesData = prompts.map((prompt, index) => ({
-    day: index + 1,
-    name: getSketchName(index, prompt),
-    description: prompt.description || prompt.name || '',
-    shorthand: prompt.shorthand || prompt.name || `Day ${index + 1}`,
-    credit: prompt.credit || [],
-    creditUrl: prompt.creditUrl || []
-  }));
-
-  // Replace template variables
-  template = template.replace(/\{\{YEAR\}\}/g, year);
-  template = template.replace(/\{\{SKETCHES_JSON\}\}/g, JSON.stringify(sketchesData, null, 2));
-
-  const galleryPath = join(projectPath, 'index.html');
-  await writeFile(galleryPath, template, 'utf-8');
-}
-
-/**
- * Generate the README.md
- */
-export async function generateReadme(projectPath, year, prompts) {
-  const templatePath = join(__dirname, 'templates', 'README.md.template');
-  let template = await readFile(templatePath, 'utf-8');
-
-  // Create prompts list
-  const promptsList = prompts
-    .map((prompt, index) => {
-      const day = index + 1;
-      const name = prompt.shorthand || prompt.name || `Day ${day}`;
-      const description = prompt.description || '';
-      return `${day}. **${name}** - ${description}`;
-    })
-    .join('\n');
-
-  // Replace template variables
-  template = template.replace(/\{\{YEAR\}\}/g, year);
-  template = template.replace(/\{\{PROMPTS_LIST\}\}/g, promptsList);
-
-  const readmePath = join(projectPath, 'README.md');
-  await writeFile(readmePath, template, 'utf-8');
-}
-
-/**
- * Generate package.json for the project
- */
-export async function generatePackageJson(projectPath, folderName, year) {
-  const packagePath = join(projectPath, 'package.json');
-  const templatePackagePath = join(__dirname, 'templates', 'package.json.template');
-
-  if (await exists(templatePackagePath)) {
-    const template = JSON.parse(await readFile(templatePackagePath, 'utf-8'));
-    template.name = folderName;
-    template.description = `Genuary ${year} sketches`;
-    await writeFile(packagePath, JSON.stringify(template, null, 2) + '\n', 'utf-8');
-    return;
-  }
-
-  const packageJson = {
-    name: folderName,
-    version: '1.0.0',
-    private: true,
-    description: `Genuary ${year} sketches`,
-    scripts: {
-      serve: 'npx http-server -p 8080'
-    }
-  };
-
-  await writeFile(packagePath, JSON.stringify(packageJson, null, 2) + '\n', 'utf-8');
-}
-
-/**
- * Generate config.json for gallery customization
- */
-export async function generateConfig(projectPath, year) {
-  const templatePath = join(__dirname, 'templates', 'config.json.template');
-  let template = await readFile(templatePath, 'utf-8');
-  template = template.replace(/\{\{YEAR\}\}/g, year);
-
-  if (!template.endsWith('\n')) {
-    template += '\n';
-  }
-
-  const configPath = join(projectPath, 'config.json');
-  await writeFile(configPath, template, 'utf-8');
-}
-
-/**
- * Generate .gitignore
- */
-export async function generateGitignore(projectPath) {
-  const templatePath = join(__dirname, 'templates', 'gitignore.template');
-  const template = await readFile(templatePath, 'utf-8');
-
-  const gitignorePath = join(projectPath, '.gitignore');
-  await writeFile(gitignorePath, template, 'utf-8');
+export async function generatePromptsJson(projectPath, year, prompts) {
+  const promptsPath = join(projectPath, 'prompts.json');
+  const contents = renderPromptsFile(year, prompts);
+  await writeFile(promptsPath, contents, 'utf-8');
 }
 
 /**
@@ -308,18 +227,27 @@ export async function generateGitignore(projectPath) {
 export async function scaffoldProject(projectPath, folderName, year, prompts, p5Version, gitRepo, onProgress) {
   // Ensure project directory exists
   await ensureDir(projectPath);
-  // Make sure a sketches container exists before we copy templates
+
+  // Clone the gallery template first
+  const templateCloned = await cloneGalleryTemplate(projectPath);
+
+  if (templateCloned) {
+    // Remove the example sketches folder from the template
+    const exampleSketchesPath = join(projectPath, 'sketches');
+    try {
+      await rm(exampleSketchesPath, { recursive: true, force: true });
+      info('Removed example sketches from template');
+    } catch (error) {
+      // Ignore if it doesn't exist
+    }
+  }
+
+  // Make sure a sketches container exists
   await ensureDir(join(projectPath, 'sketches'));
 
-  // Generate project files
-  await generatePackageJson(projectPath, folderName, year);
-  await generateGitignore(projectPath);
-  await generateConfig(projectPath, year);
+  // Generate prompts.json (replaces the one from the template)
+  await generatePromptsJson(projectPath, year, prompts);
 
   // Generate sketches
   await generateSketches(projectPath, prompts, p5Version, gitRepo, onProgress);
-
-  // Generate gallery and README
-  await generateGallery(projectPath, year, prompts);
-  await generateReadme(projectPath, year, prompts);
 }
