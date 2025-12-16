@@ -142,7 +142,7 @@ function createTemplateManager(p5Version, gitRepo) {
  * Determine whether a path from the template should be copied.
  * Skips heavy directories like node_modules that would be re-installed per sketch.
  */
-function templateCopyFilter(src) {
+export function templateCopyFilter(src) {
   const base = basename(src);
   return !IGNORED_TEMPLATE_DIRS.has(base);
 }

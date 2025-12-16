@@ -22,8 +22,15 @@
     "type": "git",
     "url": "https://github.com/SableRaf/create-genuary"
   },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "files": [
     "index.js",
     "src/"
-  ]
+  ],
+  "devDependencies": {
+    "vitest": "^4.0.15"
+  }
 }
