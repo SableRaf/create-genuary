@@ -1,4 +1,4 @@
-export { colors, log };
+export { colors, log, success, info, error };
 
 // ANSI color codes
 const colors = {
