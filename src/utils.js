@@ -1,4 +1,4 @@
-export { colors, log, success, info, error };
+export { colors, log, success, info, warn, error };
 
 // ANSI color codes
 const colors = {
@@ -20,6 +20,10 @@ function success(message) {
 
 function info(message) {
   log(message, colors.blue);
+}
+
+function warn(message) {
+  log(`⚠ ${message}`, colors.yellow);
 }
 
 function error(message) {

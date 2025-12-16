@@ -149,7 +149,7 @@
       <div id="credit"></div>
     </div>
     <div class="title-bar-right">
-      <div id="title">Genuary {{YEAR}} by [Your Name Here]</div>
+      <div id="title">Genuary {{YEAR}}</div>
     </div>
   </div>
   <iframe id="sketch-frame"></iframe>
@@ -158,9 +158,49 @@
     const sketches = {{SKETCHES_JSON}};
     let currentIndex = 0;
     const daySelect = document.getElementById('day-select');
+    const titleElement = document.getElementById('title');
+    const defaultConfig = {
+      windowTitle: 'Genuary {{YEAR}}',
+      artistName: 'Your Name Here',
+      headerTitle: ''
+    };
+    let config = { ...defaultConfig };
 
     function formatShorthand(str) {
       return str.replace(/_/g, ' ');
+    }
+
+    function updateTitleBar() {
+      const docTitle = config.windowTitle || defaultConfig.windowTitle;
+      document.title = docTitle;
+
+      const customHeader = config.headerTitle && config.headerTitle.trim();
+      if (customHeader) {
+        titleElement.textContent = customHeader;
+        return;
+      }
+
+      const artistName = config.artistName && config.artistName.trim();
+      titleElement.textContent = artistName ? `${docTitle} by ${artistName}` : docTitle;
+    }
+
+    async function loadConfig() {
+      try {
+        const response = await fetch('config.json', { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        config = { ...config, ...data };
+      } catch (err) {
+        const needsServer = window.location.protocol === 'file:';
+        const message = needsServer
+          ? 'Opening index.html directly limits access to config.json. Run a local server (npm run serve) to apply configuration changes.'
+          : 'Unable to load config.json.';
+        console.warn(message, err);
+      } finally {
+        updateTitleBar();
+      }
     }
 
     function loadSketch(index) {
@@ -235,9 +275,15 @@
       loadSketch(0);
     }
 
-    populateDaySelect();
-    loadFromHash();
-    window.addEventListener('hashchange', loadFromHash);
+    function init() {
+      updateTitleBar();
+      populateDaySelect();
+      loadFromHash();
+      window.addEventListener('hashchange', loadFromHash);
+      loadConfig();
+    }
+
+    init();
   </script>
 </body>
 </html>

@@ -36,6 +36,10 @@ Each sketch is a standalone p5.js project located in the `sketches/` folder. To 
 
 {{PROMPTS_LIST}}
 
+## Customize
+
+Update `config.json` in the project root to change the gallery title or set your name without editing `index.html`. Browsers do not allow pages opened via the `file://` protocol to read JSON files, so run `npm run serve` (or any local server) when previewing changes from `config.json`.
+
 ## Resources
 
 - [Genuary Official Website](https://genuary.art)

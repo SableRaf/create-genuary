@@ -9,7 +9,7 @@ import { resolve } from 'path';
 import { access } from 'fs/promises';
 import { fetchPrompts } from './src/prompts.js';
 import { scaffoldProject } from './src/scaffold.js';
-import { colors, log, success, info, error } from './src/utils.js';
+import { colors, log, success, info, warn, error } from './src/utils.js';
 
 function parseArguments() {
   const args = process.argv.slice(2);
@@ -19,6 +19,7 @@ function parseArguments() {
   let p5Version = 'latest';
   let yearProvided = false;
   let gitRepo = null;
+  const createP5Options = [];
 
   // Parse arguments
   for (let i = 0; i < args.length; i++) {
@@ -54,6 +55,7 @@ function parseArguments() {
         );
       }
       p5Version = versionValue;
+      createP5Options.push(`--p5-version ${versionValue}`);
     } else if (arg === '--git') {
       const repoValue = args[++i];
       if (!repoValue) {
@@ -69,7 +71,7 @@ function parseArguments() {
     }
   }
 
-  return { folder, year, p5Version, yearProvided, gitRepo };
+  return { folder, year, p5Version, yearProvided, gitRepo, createP5Options };
 }
 
 async function checkNodeVersion() {
@@ -100,7 +102,14 @@ async function main() {
     await checkNodeVersion();
 
     // Parse arguments
-    const { folder, year, p5Version, yearProvided, gitRepo } = parseArguments();
+    const {
+      folder,
+      year,
+      p5Version,
+      yearProvided,
+      gitRepo,
+      createP5Options
+    } = parseArguments();
 
     // Display header
     console.log();
@@ -122,6 +131,14 @@ async function main() {
     info(`p5.js version: ${p5Version}`);
     if (gitRepo) {
       info(`Template source: ${gitRepo}`);
+    }
+
+    if (gitRepo && createP5Options.length > 0) {
+      console.log();
+      warn(
+        'Using --git clones a template from a repository. \n  The following arguments will be ignored: ' +
+        createP5Options.join(', ')
+      );
     }
     console.log();
 

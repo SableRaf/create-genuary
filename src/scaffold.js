@@ -276,6 +276,22 @@ export async function generatePackageJson(projectPath, folderName, year) {
 }
 
 /**
+ * Generate config.json for gallery customization
+ */
+export async function generateConfig(projectPath, year) {
+  const templatePath = join(__dirname, 'templates', 'config.json.template');
+  let template = await readFile(templatePath, 'utf-8');
+  template = template.replace(/\{\{YEAR\}\}/g, year);
+
+  if (!template.endsWith('\n')) {
+    template += '\n';
+  }
+
+  const configPath = join(projectPath, 'config.json');
+  await writeFile(configPath, template, 'utf-8');
+}
+
+/**
  * Generate .gitignore
  */
 export async function generateGitignore(projectPath) {
@@ -298,6 +314,7 @@ export async function scaffoldProject(projectPath, folderName, year, prompts, p5
   // Generate project files
   await generatePackageJson(projectPath, folderName, year);
   await generateGitignore(projectPath);
+  await generateConfig(projectPath, year);
 
   // Generate sketches
   await generateSketches(projectPath, prompts, p5Version, gitRepo, onProgress);

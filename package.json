@@ -16,14 +16,14 @@
     "generative-art",
     "scaffold"
   ],
-  "author": "Your Name",
+  "author": "Raphaël de Courville",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/create-genuary"
+    "url": "https://github.com/SableRaf/create-genuary"
   },
   "files": [
     "index.js",
-    "lib/"
+    "src/"
   ]
 }
