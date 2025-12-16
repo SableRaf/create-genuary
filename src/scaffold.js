@@ -70,7 +70,8 @@ async function createTemplateProject(p5Version) {
   if (p5Version !== 'latest') {
     args.push('--version', p5Version);
   }
-  args.push('--yes');
+  args.push('--silent');
+  args.push('--type', 'basic');
 
   try {
     await runCommand('npm create p5js@latest', args, {
