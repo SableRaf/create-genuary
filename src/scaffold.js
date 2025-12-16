@@ -201,7 +201,7 @@ export async function generateSketches(projectPath, prompts, p5Version, gitRepo,
  * Generate the gallery view (index.html)
  */
 export async function generateGallery(projectPath, year, prompts) {
-  const templatePath = join(__dirname, 'templates', 'index.html');
+  const templatePath = join(__dirname, 'templates', 'index.html.template');
   let template = await readFile(templatePath, 'utf-8');
 
   // Prepare sketches data
@@ -252,7 +252,7 @@ export async function generateReadme(projectPath, year, prompts) {
  */
 export async function generatePackageJson(projectPath, folderName, year) {
   const packagePath = join(projectPath, 'package.json');
-  const templatePackagePath = join(__dirname, '..', 'base', 'package.template.json');
+  const templatePackagePath = join(__dirname, 'templates', 'package.json.template');
 
   if (await exists(templatePackagePath)) {
     const template = JSON.parse(await readFile(templatePackagePath, 'utf-8'));
