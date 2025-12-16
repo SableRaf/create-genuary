@@ -1,6 +1,6 @@
 {
   "name": "create-genuary",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Scaffold a Genuary project with all daily p5.js sketches",
   "type": "module",
   "bin": {
