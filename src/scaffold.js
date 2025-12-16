@@ -3,7 +3,7 @@
  */
 
 import { mkdir, writeFile, access, readFile, cp, mkdtemp, rm } from 'fs/promises';
-import { join, dirname } from 'path';
+import { join, dirname, basename } from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
@@ -59,13 +59,26 @@ function runCommand(command, args, options = {}) {
   });
 }
 
+const IGNORED_TEMPLATE_DIRS = new Set(['node_modules', '.git']);
+
 /**
- * Create a base p5.js template in a temporary directory
+ * Clone a template project using degit
  */
-async function createTemplateProject(p5Version) {
-  const tempRoot = await mkdtemp(join(tmpdir(), 'genuary-template-'));
-  const templateDirName = 'p5-template';
-  const templatePath = join(tempRoot, templateDirName);
+async function cloneFromGit(repo, destinationDirName, cwd) {
+  await runCommand('npx degit@latest', [repo, destinationDirName], {
+    cwd,
+    silent: false
+  });
+}
+
+/**
+ * Scaffold a base p5.js template in a temporary directory
+ */
+async function scaffoldP5Project(tempRoot, templateDirName, p5Version, gitRepo) {
+  if (gitRepo) {
+    await cloneFromGit(gitRepo, templateDirName, tempRoot);
+    return;
+  }
 
   const args = [templateDirName, '--'];
   if (p5Version !== 'latest') {
@@ -74,11 +87,22 @@ async function createTemplateProject(p5Version) {
   args.push('--silent');
   args.push('--type', 'basic');
 
+  await runCommand('npm create p5js@latest', args, {
+    cwd: tempRoot,
+    silent: false
+  });
+}
+
+/**
+ * Create a base p5.js template in a temporary directory
+ */
+async function createTemplateProject(p5Version, gitRepo) {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'genuary-template-'));
+  const templateDirName = 'p5-template';
+  const templatePath = join(tempRoot, templateDirName);
+
   try {
-    await runCommand('npm create p5js@latest', args, {
-      cwd: tempRoot,
-      silent: false
-    });
+    await scaffoldP5Project(tempRoot, templateDirName, p5Version, gitRepo);
   } catch (error) {
     await rm(tempRoot, { recursive: true, force: true });
     throw error;
@@ -95,13 +119,13 @@ async function createTemplateProject(p5Version) {
 /**
  * Lazily fetches the template and handles cleanup after use
  */
-function createTemplateManager(p5Version) {
+function createTemplateManager(p5Version, gitRepo) {
   let templateInfo = null;
 
   return {
     ensureTemplate: async () => {
       if (!templateInfo) {
-        templateInfo = await createTemplateProject(p5Version);
+        templateInfo = await createTemplateProject(p5Version, gitRepo);
       }
       return templateInfo.templatePath;
     },
@@ -115,6 +139,15 @@ function createTemplateManager(p5Version) {
 }
 
 /**
+ * Determine whether a path from the template should be copied.
+ * Skips heavy directories like node_modules that would be re-installed per sketch.
+ */
+function templateCopyFilter(src) {
+  const base = basename(src);
+  return !IGNORED_TEMPLATE_DIRS.has(base);
+}
+
+/**
  * Generate a single p5.js sketch
  */
 async function generateSketch(sketchPath, ensureTemplate) {
@@ -124,7 +157,7 @@ async function generateSketch(sketchPath, ensureTemplate) {
   }
 
   const templatePath = await ensureTemplate();
-  await cp(templatePath, sketchPath, { recursive: true });
+  await cp(templatePath, sketchPath, { recursive: true, filter: templateCopyFilter });
 
   return { skipped: false };
 }
@@ -132,11 +165,11 @@ async function generateSketch(sketchPath, ensureTemplate) {
 /**
  * Generate all sketches
  */
-export async function generateSketches(projectPath, prompts, p5Version, onProgress) {
+export async function generateSketches(projectPath, prompts, p5Version, gitRepo, onProgress) {
   const sketchesDir = join(projectPath, 'sketches');
 
   const results = [];
-  const templateManager = createTemplateManager(p5Version);
+  const templateManager = createTemplateManager(p5Version, gitRepo);
 
   try {
     for (let i = 0; i < prompts.length; i++) {
@@ -256,7 +289,7 @@ export async function generateGitignore(projectPath) {
 /**
  * Scaffold the entire project
  */
-export async function scaffoldProject(projectPath, folderName, year, prompts, p5Version, onProgress) {
+export async function scaffoldProject(projectPath, folderName, year, prompts, p5Version, gitRepo, onProgress) {
   // Ensure project directory exists
   await ensureDir(projectPath);
   // Make sure a sketches container exists before we copy templates
@@ -267,7 +300,7 @@ export async function scaffoldProject(projectPath, folderName, year, prompts, p5
   await generateGitignore(projectPath);
 
   // Generate sketches
-  await generateSketches(projectPath, prompts, p5Version, onProgress);
+  await generateSketches(projectPath, prompts, p5Version, gitRepo, onProgress);
 
   // Generate gallery and README
   await generateGallery(projectPath, year, prompts);
