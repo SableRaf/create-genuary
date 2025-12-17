@@ -3,7 +3,7 @@
  */
 
 import { mkdir, writeFile, access, cp, mkdtemp, rm } from 'fs/promises';
-import { join, basename } from 'path';
+import { join, basename, resolve } from 'path';
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
 import { getSketchName } from './prompts.js';
@@ -89,7 +89,15 @@ async function cloneGalleryTemplate(projectPath) {
 /**
  * Scaffold a base p5.js template in a temporary directory
  */
-async function scaffoldP5Project(tempRoot, templateDirName, p5Version, gitRepo) {
+async function scaffoldP5Project(tempRoot, templateDirName, p5Version, gitRepo, sourceFolder) {
+  if (sourceFolder) {
+    // Copy from local source folder
+    const sourcePath = resolve(sourceFolder);
+    const destPath = join(tempRoot, templateDirName);
+    await cp(sourcePath, destPath, { recursive: true, filter: templateCopyFilter });
+    return;
+  }
+
   if (gitRepo) {
     await cloneFromGit(gitRepo, templateDirName, tempRoot);
     return;
@@ -111,13 +119,13 @@ async function scaffoldP5Project(tempRoot, templateDirName, p5Version, gitRepo) 
 /**
  * Create a base p5.js template in a temporary directory
  */
-async function createTemplateProject(p5Version, gitRepo) {
+async function createTemplateProject(p5Version, gitRepo, sourceFolder) {
   const tempRoot = await mkdtemp(join(tmpdir(), 'genuary-template-'));
   const templateDirName = 'p5-template';
   const templatePath = join(tempRoot, templateDirName);
 
   try {
-    await scaffoldP5Project(tempRoot, templateDirName, p5Version, gitRepo);
+    await scaffoldP5Project(tempRoot, templateDirName, p5Version, gitRepo, sourceFolder);
   } catch (error) {
     await rm(tempRoot, { recursive: true, force: true });
     throw error;
@@ -134,13 +142,13 @@ async function createTemplateProject(p5Version, gitRepo) {
 /**
  * Lazily fetches the template and handles cleanup after use
  */
-function createTemplateManager(p5Version, gitRepo) {
+function createTemplateManager(p5Version, gitRepo, sourceFolder) {
   let templateInfo = null;
 
   return {
     ensureTemplate: async () => {
       if (!templateInfo) {
-        templateInfo = await createTemplateProject(p5Version, gitRepo);
+        templateInfo = await createTemplateProject(p5Version, gitRepo, sourceFolder);
       }
       return templateInfo.templatePath;
     },
@@ -180,11 +188,11 @@ async function generateSketch(sketchPath, ensureTemplate) {
 /**
  * Generate all sketches
  */
-export async function generateSketches(projectPath, prompts, p5Version, gitRepo, onProgress) {
+export async function generateSketches(projectPath, prompts, p5Version, gitRepo, sourceFolder, onProgress) {
   const sketchesDir = join(projectPath, 'sketches');
 
   const results = [];
-  const templateManager = createTemplateManager(p5Version, gitRepo);
+  const templateManager = createTemplateManager(p5Version, gitRepo, sourceFolder);
 
   try {
     for (let i = 0; i < prompts.length; i++) {
@@ -224,7 +232,7 @@ export async function generatePromptsJson(projectPath, year, prompts) {
 /**
  * Scaffold the entire project
  */
-export async function scaffoldProject(projectPath, folderName, year, prompts, p5Version, gitRepo, onProgress) {
+export async function scaffoldProject(projectPath, folderName, year, prompts, p5Version, gitRepo, sourceFolder, onProgress) {
   // Ensure project directory exists
   await ensureDir(projectPath);
 
@@ -249,5 +257,5 @@ export async function scaffoldProject(projectPath, folderName, year, prompts, p5
   await generatePromptsJson(projectPath, year, prompts);
 
   // Generate sketches
-  await generateSketches(projectPath, prompts, p5Version, gitRepo, onProgress);
+  await generateSketches(projectPath, prompts, p5Version, gitRepo, sourceFolder, onProgress);
 }

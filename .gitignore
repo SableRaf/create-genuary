@@ -141,3 +141,8 @@ vite.config.ts.timestamp-*
 # System files
 .DS_Store
 Thumbs.db
+
+# Test output directories
+test/tmp/
+test-output/
+genuary-*/

@@ -47,6 +47,9 @@ npm create genuary my-2024 -- --year 2024
 # Use specific p5.js version
 npm create genuary -- --p5-version 1.11.1
 
+# Use a local folder as template for each sketch
+npm create genuary -- --source ./path/to/local/template-folder
+
 # Use a custom template repository from GitHub
 npm create genuary -- --git user/repository-name
 
@@ -56,7 +59,6 @@ npm create genuary -- --git gitlab:user/repository-name
 # Use a custom template repository from Bitbucket
 npm create genuary -- --git bitbucket:user/repository-name
 ```
-
 
 ## Options
 
@@ -77,10 +79,18 @@ p5.js version to use in all sketches.
 - Passed to: `npm create p5js@<version>`
 - Examples: `--p5-version 1.11.1`, `--p5-version latest`
 
+### `--source` (optional)
+Path to a local folder to use as a template for each sketch instead of running `create-p5js`.
+- Examples: `--source ./my-p5-template`, `--source ../shared/p5-starter`
+- When provided, any options meant for `create-p5js` (like `--p5-version`) are ignored and a warning will be shown.
+- `--source` is not compatible with `--git` and an error will be shown if both are provided.
+
 ### `--git` (optional)
 Clone a custom template repository (via `degit`) instead of running `create-p5js`.
 - Examples: `--git user/genuary-template`, `--git user/genuary-template#branch`
 - When provided, any options meant for `create-p5js` (like `--p5-version`) are ignored and a warning will be shown.
+- `--git` is not compatible with `--source` and an error will be shown if both are provided.
+
 
 ## Generated Project Structure
 
