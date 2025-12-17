@@ -19,6 +19,7 @@ function parseArguments() {
   let p5Version = 'latest';
   let yearProvided = false;
   let gitRepo = null;
+  let sourceFolder = null;
   const createP5Options = [];
 
   // Parse arguments
@@ -62,6 +63,12 @@ function parseArguments() {
         throw new Error('--git requires a repository argument, e.g. "user/repo"');
       }
       gitRepo = repoValue;
+    } else if (arg === '--source') {
+      const sourcePath = args[++i];
+      if (!sourcePath) {
+        throw new Error('--source requires a folder path');
+      }
+      sourceFolder = sourcePath;
     } else if (arg === '--' || arg.startsWith('--')) {
       // Skip npm's separator or unknown flags
       continue;
@@ -71,7 +78,15 @@ function parseArguments() {
     }
   }
 
-  return { folder, year, p5Version, yearProvided, gitRepo, createP5Options };
+  // Validate mutually exclusive options
+  if (sourceFolder && gitRepo) {
+    throw new Error(
+      'Cannot use --source and --git together.\n' +
+      'Please use either --source for a local template or --git for a remote repository.'
+    );
+  }
+
+  return { folder, year, p5Version, yearProvided, gitRepo, sourceFolder, createP5Options };
 }
 
 async function checkNodeVersion() {
@@ -108,6 +123,7 @@ async function main() {
       p5Version,
       yearProvided,
       gitRepo,
+      sourceFolder,
       createP5Options
     } = parseArguments();
 
@@ -132,11 +148,22 @@ async function main() {
     if (gitRepo) {
       info(`Template source: ${gitRepo}`);
     }
+    if (sourceFolder) {
+      info(`Template source: ${sourceFolder}`);
+    }
 
     if (gitRepo && createP5Options.length > 0) {
       console.log();
       warn(
         'Using --git clones a template from a repository. \n  The following arguments will be ignored: ' +
+        createP5Options.join(', ')
+      );
+    }
+
+    if (sourceFolder && createP5Options.length > 0) {
+      console.log();
+      warn(
+        'Using --source uses a local template folder. \n  The following arguments will be ignored: ' +
         createP5Options.join(', ')
       );
     }
@@ -163,6 +190,7 @@ async function main() {
       prompts,
       p5Version,
       gitRepo,
+      sourceFolder,
       (sketchName, index, total) => {
         currentSketch = index;
         log(`  [${index}/${total}] ${sketchName}`, colors.gray);
