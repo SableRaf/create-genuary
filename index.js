@@ -11,8 +11,8 @@ import { fetchPrompts } from './src/prompts.js';
 import { scaffoldProject } from './src/scaffold.js';
 import { logColors, log, success, info, warn, error } from './src/utils.js';
 
-function parseArguments() {
-  const args = process.argv.slice(2);
+export function parseArguments(argv = process.argv.slice(2)) {
+  const args = argv;
 
   let folder = null;
   let outputDirProvided = false;
@@ -128,7 +128,7 @@ function parseArguments() {
   };
 }
 
-async function checkNodeVersion() {
+export async function checkNodeVersion() {
   const version = process.version;
   const major = parseInt(version.slice(1).split('.')[0]);
 
@@ -141,7 +141,7 @@ async function checkNodeVersion() {
   }
 }
 
-async function checkFolderExists(folderPath) {
+export async function checkFolderExists(folderPath) {
   try {
     await access(folderPath);
     return true;
@@ -289,4 +289,7 @@ async function main() {
   }
 }
 
-main();
+// Only run main() when this file is executed directly, not when imported
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
