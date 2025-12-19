@@ -8,6 +8,7 @@
 import { resolve, normalize, isAbsolute, relative, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { access } from 'fs/promises';
+import { realpathSync } from 'fs';
 import { fetchPrompts } from './src/prompts.js';
 import { scaffoldProject } from './src/scaffold.js';
 import { logColors, log, success, info, warn, error } from './src/utils.js';
@@ -332,9 +333,24 @@ async function main() {
 }
 
 // Only run main() when this file is executed directly, not when imported
-const isExecutedDirectly = process.argv[1]
-  ? fileURLToPath(import.meta.url) === resolve(process.argv[1])
-  : true; // If argv[1] is undefined, assume direct execution (npm create scenario)
+// When run via npm/npx, process.argv[1] may point to a symlink in node_modules/.bin
+// We need to resolve symlinks to compare the actual file paths
+const scriptPath = fileURLToPath(import.meta.url);
+let isExecutedDirectly = false;
+
+if (!process.argv[1]) {
+  // npm create scenario where argv[1] might be undefined
+  isExecutedDirectly = true;
+} else {
+  try {
+    // Resolve symlinks in argv[1] to get the real path
+    const realArgvPath = realpathSync(process.argv[1]);
+    isExecutedDirectly = realArgvPath === scriptPath;
+  } catch {
+    // If realpath fails, fall back to simple comparison
+    isExecutedDirectly = resolve(process.argv[1]) === scriptPath;
+  }
+}
 
 if (isExecutedDirectly) {
   main();
