@@ -107,6 +107,23 @@ describe('--outputDir argument', () => {
   });
 });
 
+describe('--sketchesDir argument', () => {
+  test('should use provided --sketchesDir value', () => {
+    const result = parseArguments([
+      '--sketchesDir', 'projects',
+      '--year', '2024'
+    ]);
+
+    expect(result.sketchesDir).toBe('projects');
+  });
+
+  test('should require a value for --sketchesDir', () => {
+    expect(() => {
+      parseArguments(['--sketchesDir']);
+    }).toThrow('--sketchesDir requires a folder name');
+  });
+});
+
 describe('output folder validation', () => {
   test('should reject path traversal segments for --outputDir', () => {
     const traversalPath = join('..', 'tmp', 'malicious');
