@@ -12,7 +12,7 @@ describe('--sourceDir argument', () => {
     }).toThrow('Cannot use --sourceDir and --templateRepo together');
   });
 
-  test('should treat folder name as source path when no source value provided', () => {
+  test('should use provided --sourceDir value', () => {
     const result = parseArguments([
       '--sourceDir',
       '/path/to/source',
