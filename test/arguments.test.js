@@ -83,3 +83,25 @@ describe('argument parsing edge cases', () => {
     expect(result.sourceDir).toBe(absolutePath);
   });
 });
+
+describe('--outputDir argument', () => {
+  test('should set folder when --outputDir is provided', () => {
+    const result = parseArguments(['--outputDir', 'my-project']);
+
+    expect(result.folder).toBe('my-project');
+  });
+
+  test('should error when --outputDir is used with a positional folder', () => {
+    expect(() => {
+      parseArguments(['--outputDir', 'my-project', 'extra-folder']);
+    }).toThrow(
+      'Choose only one output folder: use a positional folder or --outputDir, not both. Example: create-genuary my-project OR create-genuary --outputDir my-project.'
+    );
+  });
+
+  test('should require a value for --outputDir', () => {
+    expect(() => {
+      parseArguments(['--outputDir']);
+    }).toThrow('--outputDir requires a folder path');
+  });
+});
