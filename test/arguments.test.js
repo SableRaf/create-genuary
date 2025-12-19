@@ -1,4 +1,5 @@
 import { test, expect, describe } from 'vitest';
+import { resolve, join } from 'path';
 import { parseArguments } from '../index.js';
 
 describe('--sourceDir argument', () => {
@@ -103,5 +104,23 @@ describe('--outputDir argument', () => {
     expect(() => {
       parseArguments(['--outputDir']);
     }).toThrow('--outputDir requires a folder path');
+  });
+});
+
+describe('output folder validation', () => {
+  test('should reject path traversal segments for --outputDir', () => {
+    const traversalPath = join('..', 'tmp', 'malicious');
+    expect(() => {
+      parseArguments(['--outputDir', traversalPath]);
+    }).toThrow('Invalid output folder: must not contain ".." path segments.');
+  });
+
+  test('should reject absolute paths for positional folders', () => {
+    const absolutePath = resolve('genuary-absolute');
+    expect(() => {
+      parseArguments([absolutePath]);
+    }).toThrow(
+      'Invalid output folder: must be a relative path within the current working directory.'
+    );
   });
 });

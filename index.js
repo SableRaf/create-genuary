@@ -5,7 +5,7 @@
  * Scaffold a complete Genuary project with all daily p5.js sketches
  */
 
-import { resolve } from 'path';
+import { resolve, normalize, isAbsolute, relative, sep } from 'path';
 import { access } from 'fs/promises';
 import { fetchPrompts } from './src/prompts.js';
 import { scaffoldProject } from './src/scaffold.js';
@@ -91,6 +91,7 @@ export function parseArguments(argv = process.argv.slice(2)) {
         );
       }
       folder = outputPath;
+      validateOutputFolder(folder);
     } else if (arg === '--sketchesDir') {
       const sketchesPath = args[++i];
       if (!sketchesPath) {
@@ -107,6 +108,7 @@ export function parseArguments(argv = process.argv.slice(2)) {
     } else if (!folder) {
       // First positional argument is the folder name
       folder = arg;
+      validateOutputFolder(folder);
     }
   }
 
@@ -130,6 +132,35 @@ export function parseArguments(argv = process.argv.slice(2)) {
     usedDeprecatedGit,
     createP5Options
   };
+}
+
+export function validateOutputFolder(folderName, cwd = process.cwd()) {
+  if (!folderName) {
+    return;
+  }
+
+  const normalized = normalize(folderName);
+  if (isAbsolute(normalized)) {
+    throw new Error(
+      'Invalid output folder: must be a relative path within the current working directory.'
+    );
+  }
+
+  const segments = normalized.split(sep);
+  if (segments.includes('..')) {
+    throw new Error(
+      'Invalid output folder: must not contain ".." path segments.'
+    );
+  }
+
+  const resolvedPath = resolve(cwd, normalized);
+  const relativePath = relative(cwd, resolvedPath);
+  const relativeSegments = relativePath.split(sep);
+  if (relativeSegments.includes('..')) {
+    throw new Error(
+      'Invalid output folder: must be within the current working directory.'
+    );
+  }
 }
 
 export async function checkNodeVersion() {
