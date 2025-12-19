@@ -1,7 +1,17 @@
-import { test, expect } from 'vitest';
-import { mkdtemp, readFile, rm } from 'fs/promises';
+import { test, expect, vi } from 'vitest';
+import { mkdtemp, readFile, rm, writeFile, access } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { EventEmitter } from 'events';
+import { getSketchName } from '../src/prompts.js';
+
+vi.mock('child_process', () => ({
+  spawn: () => {
+    const emitter = new EventEmitter();
+    process.nextTick(() => emitter.emit('close', 0));
+    return emitter;
+  }
+}));
 
 async function importScaffold() {
   return import('../src/scaffold.js');
@@ -44,6 +54,47 @@ test('generatePromptsJson writes prompts payload with folderName', async () => {
     expect(data.genuaryPrompts[1].folderName).toBe('02_no_palettes');
   } finally {
     await rm(projectDir, { recursive: true, force: true });
+  }
+});
+
+test('scaffoldProject creates and uses a custom sketches directory', async () => {
+  const { scaffoldProject } = await importScaffold();
+  const projectDir = await mkdtemp(join(tmpdir(), 'genuary-project-'));
+  const templateSource = await mkdtemp(join(tmpdir(), 'genuary-template-'));
+  const prompts = [
+    { name: 'Particles, lots of them.', shorthand: 'Particles' },
+    { name: 'No palettes.', description: 'No palettes prompt.' }
+  ];
+  const sketchesDir = 'projects';
+
+  try {
+    await writeFile(join(templateSource, 'template.txt'), 'template', 'utf-8');
+
+    await scaffoldProject(
+      projectDir,
+      'genuary-test',
+      2024,
+      prompts,
+      'latest',
+      null,
+      templateSource,
+      sketchesDir
+    );
+
+    const firstSketch = getSketchName(0, prompts[0]);
+    const customSketchFile = join(
+      projectDir,
+      sketchesDir,
+      firstSketch,
+      'template.txt'
+    );
+
+    await access(join(projectDir, sketchesDir));
+    const copied = await readFile(customSketchFile, 'utf-8');
+    expect(copied).toBe('template');
+  } finally {
+    await rm(projectDir, { recursive: true, force: true });
+    await rm(templateSource, { recursive: true, force: true });
   }
 });
 
