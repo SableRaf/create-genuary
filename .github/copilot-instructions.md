@@ -21,6 +21,11 @@
 - Boundary conditions for CLI flags (`--outputDir`, `--year`, `--p5-version`, `--sourceDir`, `--templateRepo`, `--sketchesDir`)
 - Unexpected behavior when combining flags (e.g., `--sourceDir` with `--templateRepo`)
 
+### Cross-platform Compatibility
+- Generated paths in `index.html` and output files must use `path.posix` for forward slashes (works on all OSes)
+- Filesystem operations must use the `path` module (not `path.posix`) to handle OS-specific separators
+- Hardcoded path separators (`/` or `\`) in code that manipulates paths should be replaced with `path.sep` or `path.join()`
+
 ### Architecture & Patterns
 - Mixing concerns: keep core scaffold logic in `src/`, CLI entry in `index.js`, helpers in `src/utils/`
 - Bypassing shared utilities with ad-hoc path handling or prompt parsing
