@@ -95,7 +95,7 @@ describe('--outputDir argument', () => {
     expect(() => {
       parseArguments(['--outputDir', 'my-project', 'extra-folder']);
     }).toThrow(
-      'Choose only one output folder: use a positional folder or --outputDir, not both. Example: create-genuary my-project OR create-genuary --outputDir my-project.'
+      'Choose only one output folder: use a positional folder or --outputDir, not both. \nExample: `create-genuary my-project` OR `create-genuary --outputDir my-project`.'
     );
   });
 

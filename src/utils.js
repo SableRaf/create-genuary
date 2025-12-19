@@ -26,13 +26,15 @@ const logColors = {
 };
 
 /**
- * Colorizes CLI flags within a message and restores the parent color after each flag
- * @param {string} message - The message containing flags
- * @param {string} parentColorCode - The ANSI color code to restore after each flag
- * @returns {string} The message with colorized flags
+ * Colorizes CLI flags and backtick content within a message and restores the parent color after each match
+ * @param {string} message - The message containing flags and/or backtick content
+ * @param {string} parentColorCode - The ANSI color code to restore after each match
+ * @returns {string} The message with colorized flags and backtick content
  */
 function colorizeFlags(message, parentColorCode) {
-  return message.replace(/--[a-zA-Z0-9-]+/g, (match) =>
+  // Match backticks first (greedy), then flags outside of backticks
+  // Using a combined regex with alternation to handle both in a single pass
+  return message.replace(/`[^`]+`|--[a-zA-Z0-9-]+/g, (match) =>
     `${ANSI.white}${match}${parentColorCode}`
   );
 }

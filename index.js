@@ -86,7 +86,9 @@ export function parseArguments(argv = process.argv.slice(2)) {
       }
       outputDirProvided = true;
       if (folder) {
-        throw new Error('Cannot use positional folder and --outputDir together.');
+        throw new Error(
+          'Choose only one output folder: use a positional folder or --outputDir, not both. \nExample: `create-genuary my-project` OR `create-genuary --outputDir my-project`.'
+        );
       }
       folder = outputPath;
     } else if (arg === '--sketchesDir') {
@@ -99,7 +101,9 @@ export function parseArguments(argv = process.argv.slice(2)) {
       // Skip npm's separator or unknown flags
       continue;
     } else if (outputDirProvided) {
-      throw new Error('Cannot use positional folder and --outputDir together.');
+      throw new Error(
+        'Choose only one output folder: use a positional folder or --outputDir, not both. \nExample: `create-genuary my-project` OR `create-genuary --outputDir my-project`.'
+      );
     } else if (!folder) {
       // First positional argument is the folder name
       folder = arg;
