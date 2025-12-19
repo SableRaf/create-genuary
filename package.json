@@ -1,6 +1,6 @@
 {
   "name": "create-genuary",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Scaffold a Genuary project with all daily p5.js sketches",
   "type": "module",
   "bin": {
@@ -24,7 +24,8 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "pre-publish": "npm pack --dry-run && npm test && node scripts/check-npm-login.js"
   },
   "files": [
     "index.js",
