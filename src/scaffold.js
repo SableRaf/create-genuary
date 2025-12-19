@@ -268,7 +268,7 @@ export async function scaffoldProject(
     }
   }
 
-  // Make sure a projects container exists
+  // Make sure a projects container exists (default: "sketches")
   await ensureDir(join(projectPath, projectsDir));
 
   // Generate prompts.json (replaces the one from the template)
