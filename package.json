@@ -24,7 +24,8 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "pre-publish": "npm pack --dry-run && npm test && node scripts/check-npm-login.js"
   },
   "files": [
     "index.js",
