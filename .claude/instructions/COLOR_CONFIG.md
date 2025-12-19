@@ -78,7 +78,7 @@ Just write plain error/warning messages - flags are automatically colored:
 ```javascript
 import { error, warn, info, success } from './src/utils.js';
 
-// Flags are automatically highlighted in blue
+// Flags are automatically highlighted in white
 error('The --source flag requires a value');
 warn('Deprecated flag detected: --git');
 info('Using --templateRepo to clone from GitHub');
@@ -137,15 +137,15 @@ All CLI flags and log messages will automatically use the new colors without nee
 // Simple, clean syntax - no manual flag formatting needed
 error('The --source flag requires a value');
 // Output: ✗ The --source flag requires a value
-//         (--source will be blue, rest will be red)
+//         (--source will be white, rest will be red)
 
 warn('Deprecated flag detected: --git. Use --templateRepo instead.');
 // Output: ⚠ Deprecated flag detected: --git. Use --templateRepo instead.
-//         (Both --git and --templateRepo will be blue, rest will be yellow)
+//         (Both --git and --templateRepo will be white, rest will be yellow)
 
 info('Using --sourceDir for local template folder');
 // Output: Using --sourceDir for local template folder
-//         (--sourceDir will be blue, rest will be blue)
+//         (--sourceDir will be white, rest will be white)
 ```
 
 ### Custom Color Combinations
