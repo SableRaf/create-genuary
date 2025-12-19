@@ -332,6 +332,10 @@ async function main() {
 }
 
 // Only run main() when this file is executed directly, not when imported
-if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+const isExecutedDirectly = process.argv[1]
+  ? fileURLToPath(import.meta.url) === resolve(process.argv[1])
+  : true; // If argv[1] is undefined, assume direct execution (npm create scenario)
+
+if (isExecutedDirectly) {
   main();
 }
