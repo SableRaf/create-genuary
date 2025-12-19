@@ -47,17 +47,23 @@ npm create genuary my-2024 -- --year 2024
 # Use specific p5.js version
 npm create genuary -- --p5-version 1.11.1
 
+# Use --outputDir instead of positional folder
+npm create genuary -- --outputDir my-genuary
+
 # Use a local folder as template for each sketch
-npm create genuary -- --source ./path/to/local/template-folder
+npm create genuary -- --sourceDir ./path/to/local/template-folder
 
 # Use a custom template repository from GitHub
-npm create genuary -- --git user/repository-name
+npm create genuary -- --templateRepo user/repository-name
 
 # Use a custom template repository from GitLab
-npm create genuary -- --git gitlab:user/repository-name
+npm create genuary -- --templateRepo gitlab:user/repository-name
 
 # Use a custom template repository from Bitbucket
-npm create genuary -- --git bitbucket:user/repository-name
+npm create genuary -- --templateRepo bitbucket:user/repository-name
+
+# Customize the sketches folder name
+npm create genuary -- --sketchesDir projects
 ```
 
 ## Options
@@ -66,6 +72,10 @@ npm create genuary -- --git bitbucket:user/repository-name
 The target folder name for the project.
 - Default: `genuary-<year>`
 - Examples: `my-genuary`, `genuary-2025`, `art-challenge`
+
+### `--outputDir` (optional)
+Alias for the `folder` argument.
+- Examples: `--outputDir my-genuary`, `--outputDir genuary-2025`
 
 ### `--year` (optional)
 Genuary year to use for prompts.
@@ -79,24 +89,33 @@ p5.js version to use in all sketches.
 - Passed to: `npm create p5js@<version>`
 - Examples: `--p5-version 1.11.1`, `--p5-version latest`
 
-### `--source` (optional)
+### `--sourceDir` (optional)
 Path to a local folder to use as a template for each sketch instead of running `create-p5js`.
-- Examples: `--source ./my-p5-template`, `--source ../shared/p5-starter`
+- Examples: `--sourceDir ./my-p5-template`, `--sourceDir ../shared/p5-starter`
 - When provided, any options meant for `create-p5js` (like `--p5-version`) are ignored and a warning will be shown.
-- `--source` is not compatible with `--git` and an error will be shown if both are provided.
+- `--sourceDir` is not compatible with `--templateRepo` and an error will be shown if both are provided.
+- Deprecated alias: `--source` (use `--sourceDir`)
 
-### `--git` (optional)
+### `--templateRepo` (optional)
 Clone a custom template repository (via `degit`) instead of running `create-p5js`.
-- Examples: `--git user/genuary-template`, `--git user/genuary-template#branch`
+- Examples: `--templateRepo user/genuary-template`, `--templateRepo user/genuary-template#branch`
 - When provided, any options meant for `create-p5js` (like `--p5-version`) are ignored and a warning will be shown.
-- `--git` is not compatible with `--source` and an error will be shown if both are provided.
+- `--templateRepo` is not compatible with `--sourceDir` and an error will be shown if both are provided.
+- Deprecated alias: `--git` (use `--templateRepo`)
+
+### `--sketchesDir` (optional)
+Folder name for all generated sketches inside the project.
+- Default: `sketches`
+- Examples: `--sketchesDir sketches`, `--sketchesDir projects`
 
 
 ## Generated Project Structure
 
+If you use `--sketchesDir`, the `sketches/` folder name will reflect that value.
+
 ```
-genuary-2025/
-├── sketches/
+genuary-2025/                   # Project root (customizable with --outputDir or folder argument)
+├── sketches/                   # All daily sketches (customizable with --sketchesDir)
 │   ├── 01_particles/           # p5.js sketch
 │   ├── 02_no_palettes/         # p5.js sketch
 │   ├── 03_droste_effect/       # p5.js sketch

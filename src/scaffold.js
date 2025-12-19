@@ -7,7 +7,7 @@ import { join, basename, resolve } from 'path';
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
 import { getSketchName } from './prompts.js';
-import { colors, log, success, info, error, warn } from './utils.js';
+import { success, info, warn } from './utils.js';
 import { renderPromptsFile } from './templateRenderer.js';
 
 /**
@@ -188,8 +188,16 @@ async function generateSketch(sketchPath, ensureTemplate) {
 /**
  * Generate all sketches
  */
-export async function generateSketches(projectPath, prompts, p5Version, gitRepo, sourceFolder, onProgress) {
-  const sketchesDir = join(projectPath, 'sketches');
+export async function generateSketches(
+  projectPath,
+  prompts,
+  p5Version,
+  gitRepo,
+  sourceFolder,
+  projectsDir = 'sketches',
+  onProgress
+) {
+  const sketchesDir = join(projectPath, projectsDir);
 
   const results = [];
   const templateManager = createTemplateManager(p5Version, gitRepo, sourceFolder);
@@ -232,7 +240,17 @@ export async function generatePromptsJson(projectPath, year, prompts) {
 /**
  * Scaffold the entire project
  */
-export async function scaffoldProject(projectPath, folderName, year, prompts, p5Version, gitRepo, sourceFolder, onProgress) {
+export async function scaffoldProject(
+  projectPath,
+  folderName,
+  year,
+  prompts,
+  p5Version,
+  gitRepo,
+  sourceFolder,
+  projectsDir = 'sketches',
+  onProgress
+) {
   // Ensure project directory exists
   await ensureDir(projectPath);
 
@@ -241,21 +259,21 @@ export async function scaffoldProject(projectPath, folderName, year, prompts, p5
 
   if (templateCloned) {
     // Remove the example sketches folder from the template
-    const exampleSketchesPath = join(projectPath, 'sketches');
+    const exampleSketchesPath = join(projectPath, projectsDir);
     try {
       await rm(exampleSketchesPath, { recursive: true, force: true });
-      info('Removed example sketches from template');
+      info(`Removed example ${projectsDir} folder from template`);
     } catch (error) {
       // Ignore if it doesn't exist
     }
   }
 
-  // Make sure a sketches container exists
-  await ensureDir(join(projectPath, 'sketches'));
+  // Make sure a projects container exists
+  await ensureDir(join(projectPath, projectsDir));
 
   // Generate prompts.json (replaces the one from the template)
   await generatePromptsJson(projectPath, year, prompts);
 
   // Generate sketches
-  await generateSketches(projectPath, prompts, p5Version, gitRepo, sourceFolder, onProgress);
+  await generateSketches(projectPath, prompts, p5Version, gitRepo, sourceFolder, projectsDir, onProgress);
 }

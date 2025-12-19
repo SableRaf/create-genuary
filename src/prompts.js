@@ -2,8 +2,6 @@
  * Fetch and validate Genuary prompts from genuary.art
  */
 
-import { colors, log, success, info, error } from './utils.js';
-
 export async function fetchPrompts(year) {
   const url = year
     ? `https://genuary.art/${year}/prompts.json`
@@ -26,10 +24,6 @@ export async function fetchPrompts(year) {
 
     if (!data.year) {
       throw new Error('Invalid prompts format: missing "year" key');
-    } else {
-      console.log();
-      console.log(`Fetched prompts for year: ${data.year}`, colors.gray);
-      console.log();
     }
 
     // Validate schema

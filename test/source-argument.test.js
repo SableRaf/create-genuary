@@ -33,6 +33,10 @@ function runCLI(args) {
   });
 }
 
+function stripAnsi(value) {
+  return value.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
 /**
  * Create a minimal template folder for testing
  */
@@ -48,7 +52,7 @@ async function createTestTemplate(templateDir) {
   );
 }
 
-describe('--source argument', () => {
+describe('--sourceDir argument', () => {
   let testDir;
   let templateDir;
 
@@ -64,71 +68,73 @@ describe('--source argument', () => {
     }
   });
 
-  test('should error when --source and --git are used together', async () => {
+  test('should error when --sourceDir and --templateRepo are used together', async () => {
     const { code, stdout, stderr } = await runCLI([
-      '--source', templateDir,
+      '--sourceDir', templateDir,
       '--git', 'user/repo',
       join(testDir, 'output')
     ]);
 
     expect(code).toBe(1);
-    const output = stdout + stderr;
-    expect(output).toContain('Cannot use --source and --git together');
-    expect(output).toContain('Please use either --source for a local template or --git for a remote repository');
+    const output = stripAnsi(stdout + stderr);
+    expect(output).toContain('Cannot use --sourceDir and --templateRepo together');
+    expect(output).toContain('Please use either --sourceDir for a local template or --templateRepo for a remote repository');
   });
 
   test('should treat folder name as source path when no source value provided', async () => {
-    // When --source is the last argument, the next argument becomes the source path
+    // When --sourceDir is the last argument, the next argument becomes the source path
     // This is how argument parsing works - we can't prevent this without more complex logic
     // So we test that it tries to use a non-existent path as source
     const nonExistentPath = join(testDir, 'does-not-exist');
     const { code, stdout, stderr } = await runCLI([
-      '--source',
+      '--sourceDir',
       nonExistentPath,
       '--year', '2024'
     ]);
 
     // It will fail when trying to copy from non-existent source
     expect(code).toBe(1);
-    const output = stdout + stderr;
+    const output = stripAnsi(stdout + stderr);
     // Either fails on path not existing, or on project name issues
     expect(code).toBe(1);
   });
 
-  test('should show warning when --source is used with --p5-version', async () => {
+  test('should show warning when --sourceDir is used with --p5-version', async () => {
     const outputDir = join(testDir, 'output-with-version');
     const { stdout } = await runCLI([
-      '--source', templateDir,
+      '--sourceDir', templateDir,
       '--p5-version', '1.9.0',
       '--year', '2024',
       outputDir
     ]);
 
-    expect(stdout).toContain('Using --source uses a local template folder');
-    expect(stdout).toContain('--p5-version 1.9.0');
-    expect(stdout).toContain('will be ignored');
+    const output = stripAnsi(stdout);
+    expect(output).toContain('Using --sourceDir uses a local template folder');
+    expect(output).toContain('--p5-version 1.9.0');
+    expect(output).toContain('will be ignored');
 
     // Clean up output directory
     await rm(outputDir, { recursive: true, force: true });
   });
 
-  test('should display template source path when using --source', async () => {
+  test('should display template source path when using --sourceDir', async () => {
     const outputDir = join(testDir, 'output-basic');
     const { stdout } = await runCLI([
-      '--source', templateDir,
+      '--sourceDir', templateDir,
       '--year', '2024',
       outputDir
     ]);
 
-    expect(stdout).toContain('Template source:');
-    expect(stdout).toContain(templateDir);
+    const output = stripAnsi(stdout);
+    expect(output).toContain('Template source:');
+    expect(output).toContain(templateDir);
 
     // Clean up output directory
     await rm(outputDir, { recursive: true, force: true });
   });
 });
 
-describe('--source integration', () => {
+describe('--sourceDir integration', () => {
   let testDir;
   let templateDir;
 
@@ -147,15 +153,16 @@ describe('--source integration', () => {
   test('should use local template folder to create sketches', async () => {
     const outputDir = join(testDir, 'output');
     const { code, stdout } = await runCLI([
-      '--source', templateDir,
+      '--sourceDir', templateDir,
       '--year', '2024',
       outputDir
     ]);
 
     // Check that it completes successfully (note: may fail due to network/API issues in tests)
     // We're mainly testing that the argument parsing and setup works correctly
-    expect(stdout).toContain('Template source:');
-    expect(stdout).toContain(templateDir);
+    const output = stripAnsi(stdout);
+    expect(output).toContain('Template source:');
+    expect(output).toContain(templateDir);
 
     // Clean up output directory
     await rm(outputDir, { recursive: true, force: true });
@@ -170,28 +177,30 @@ describe('argument parsing edge cases', () => {
     await rm('genuary-2024', { recursive: true, force: true });
   });
 
-  test('should handle relative paths for --source', async () => {
+  test('should handle relative paths for --sourceDir', async () => {
     const outputDir = join('test', 'tmp', 'output-relative');
     const { stdout } = await runCLI([
-      '--source', './test',
+      '--sourceDir', './test',
       '--year', '2024',
       outputDir
     ]);
 
     // Should accept relative paths (will resolve them internally)
-    expect(stdout).toContain('Template source: ./test');
+    const output = stripAnsi(stdout);
+    expect(output).toContain('Template source: ./test');
   });
 
-  test('should handle absolute paths for --source', async () => {
+  test('should handle absolute paths for --sourceDir', async () => {
     const absolutePath = join(tmpdir(), 'test-template');
     const outputDir = join('test', 'tmp', 'output-absolute');
     const { stdout } = await runCLI([
-      '--source', absolutePath,
+      '--sourceDir', absolutePath,
       '--year', '2024',
       outputDir
     ]);
 
-    expect(stdout).toContain('Template source:');
-    expect(stdout).toContain(absolutePath);
+    const output = stripAnsi(stdout);
+    expect(output).toContain('Template source:');
+    expect(output).toContain(absolutePath);
   });
 });

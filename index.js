@@ -9,17 +9,21 @@ import { resolve } from 'path';
 import { access } from 'fs/promises';
 import { fetchPrompts } from './src/prompts.js';
 import { scaffoldProject } from './src/scaffold.js';
-import { colors, log, success, info, warn, error } from './src/utils.js';
+import { logColors, log, success, info, warn, error } from './src/utils.js';
 
 function parseArguments() {
   const args = process.argv.slice(2);
 
   let folder = null;
+  let outputDirProvided = false;
   let year = new Date().getFullYear();
   let p5Version = 'latest';
   let yearProvided = false;
-  let gitRepo = null;
-  let sourceFolder = null;
+  let templateRepo = null;
+  let sourceDir = null;
+  let sketchesDir = 'sketches';
+  let usedDeprecatedSource = false;
+  let usedDeprecatedGit = false;
   const createP5Options = [];
 
   // Parse arguments
@@ -57,21 +61,45 @@ function parseArguments() {
       }
       p5Version = versionValue;
       createP5Options.push(`--p5-version ${versionValue}`);
-    } else if (arg === '--git') {
+    } else if (arg === '--templateRepo' || arg === '--git') {
       const repoValue = args[++i];
       if (!repoValue) {
-        throw new Error('--git requires a repository argument, e.g. "user/repo"');
+        throw new Error(`${arg} requires a repository argument, e.g. "user/repo"`);
       }
-      gitRepo = repoValue;
-    } else if (arg === '--source') {
+      if (arg === '--git') {
+        usedDeprecatedGit = true;
+      }
+      templateRepo = repoValue;
+    } else if (arg === '--sourceDir' || arg === '--source') {
       const sourcePath = args[++i];
       if (!sourcePath) {
-        throw new Error('--source requires a folder path');
+        throw new Error(`${arg} requires a folder path`);
       }
-      sourceFolder = sourcePath;
+      if (arg === '--source') {
+        usedDeprecatedSource = true;
+      }
+      sourceDir = sourcePath;
+    } else if (arg === '--outputDir') {
+      const outputPath = args[++i];
+      if (!outputPath) {
+        throw new Error('--outputDir requires a folder path');
+      }
+      outputDirProvided = true;
+      if (folder) {
+        throw new Error('Cannot use positional folder and --outputDir together.');
+      }
+      folder = outputPath;
+    } else if (arg === '--sketchesDir') {
+      const sketchesPath = args[++i];
+      if (!sketchesPath) {
+        throw new Error('--sketchesDir requires a folder name');
+      }
+      sketchesDir = sketchesPath;
     } else if (arg === '--' || arg.startsWith('--')) {
       // Skip npm's separator or unknown flags
       continue;
+    } else if (outputDirProvided) {
+      throw new Error('Cannot use positional folder and --outputDir together.');
     } else if (!folder) {
       // First positional argument is the folder name
       folder = arg;
@@ -79,14 +107,25 @@ function parseArguments() {
   }
 
   // Validate mutually exclusive options
-  if (sourceFolder && gitRepo) {
+  if (sourceDir && templateRepo) {
     throw new Error(
-      'Cannot use --source and --git together.\n' +
-      'Please use either --source for a local template or --git for a remote repository.'
+      'Cannot use --sourceDir and --templateRepo together.\n' +
+      'Please use either --sourceDir for a local template or --templateRepo for a remote repository.'
     );
   }
 
-  return { folder, year, p5Version, yearProvided, gitRepo, sourceFolder, createP5Options };
+  return {
+    folder,
+    year,
+    p5Version,
+    yearProvided,
+    templateRepo,
+    sourceDir,
+    sketchesDir,
+    usedDeprecatedSource,
+    usedDeprecatedGit,
+    createP5Options
+  };
 }
 
 async function checkNodeVersion() {
@@ -122,19 +161,38 @@ async function main() {
       year,
       p5Version,
       yearProvided,
-      gitRepo,
-      sourceFolder,
+      templateRepo,
+      sourceDir,
+      sketchesDir,
+      usedDeprecatedSource,
+      usedDeprecatedGit,
       createP5Options
     } = parseArguments();
 
     // Display header
     console.log();
-    log('╔═══════════════════════════════════════╗', colors.blue);
-    log('║       Create Genuary Project          ║', colors.blue);
-    log('╚═══════════════════════════════════════╝', colors.blue);
+    log('╔═══════════════════════════════════════╗', logColors.info);
+    log('║       Create Genuary Project          ║', logColors.info);
+    log('╚═══════════════════════════════════════╝', logColors.info);
     console.log();
 
-    log('Fetching prompts from genuary.art...', colors.gray);
+    if (usedDeprecatedSource || usedDeprecatedGit) {
+      if (usedDeprecatedSource) {
+        warn(
+          'Deprecated flag detected: --source ' +
+          '(will be replaced by --sourceDir in future releases).'
+        );
+      }
+      if (usedDeprecatedGit) {
+        warn(
+          'Deprecated flag detected: --git ' +
+          '(will be replaced by --templateRepo in future releases).'
+        );
+      }
+      console.log();
+    }
+
+    log('Fetching prompts from genuary.art...', logColors.log);
     const { prompts, year: promptsYear } = yearProvided ? await fetchPrompts(year) : await fetchPrompts();
     const projectYear = yearProvided ? year : promptsYear;
     const folderName = folder || `genuary-${projectYear}`;
@@ -145,25 +203,30 @@ async function main() {
 
     info(`Creating Genuary ${projectYear} project in: ${folderName}/`);
     info(`p5.js version: ${p5Version}`);
-    if (gitRepo) {
-      info(`Template source: ${gitRepo}`);
+    if (templateRepo) {
+      info(`Template source: ${templateRepo}`);
     }
-    if (sourceFolder) {
-      info(`Template source: ${sourceFolder}`);
+    if (sourceDir) {
+      info(`Template source: ${sourceDir}`);
+    }
+    if (sketchesDir !== 'sketches') {
+      info(`Sketches folder: ${sketchesDir}`);
     }
 
-    if (gitRepo && createP5Options.length > 0) {
+    if (templateRepo && createP5Options.length > 0) {
       console.log();
       warn(
-        'Using --git clones a template from a repository. \n  The following arguments will be ignored: ' +
+        'Using --templateRepo clones a template from a repository. \n' +
+        '  The following arguments will be ignored: ' +
         createP5Options.join(', ')
       );
     }
 
-    if (sourceFolder && createP5Options.length > 0) {
+    if (sourceDir && createP5Options.length > 0) {
       console.log();
       warn(
-        'Using --source uses a local template folder. \n  The following arguments will be ignored: ' +
+        'Using --sourceDir uses a local template folder. \n' +
+        '  The following arguments will be ignored: ' +
         createP5Options.join(', ')
       );
     }
@@ -178,10 +241,7 @@ async function main() {
     }
 
     // Scaffold project
-    log('Creating project structure...', colors.gray);
-
-    let currentSketch = 0;
-    const totalSketches = prompts.length;
+    log('Creating project structure...', logColors.log);
 
     await scaffoldProject(
       projectPath,
@@ -189,11 +249,11 @@ async function main() {
       projectYear,
       prompts,
       p5Version,
-      gitRepo,
-      sourceFolder,
+      templateRepo,
+      sourceDir,
+      sketchesDir,
       (sketchName, index, total) => {
-        currentSketch = index;
-        log(`  [${index}/${total}] ${sketchName}`, colors.gray);
+        log(`  [${index}/${total}] ${sketchName}`, logColors.log);
       }
     );
 
@@ -202,15 +262,24 @@ async function main() {
     console.log();
 
     // Display next steps
-    log('Next steps:', colors.blue);
+    log('Next steps:', logColors.log);
     console.log();
-    log('Start a local server:', colors.pink);
+    log('Start a local server:', logColors.log);
     console.log();
-    log(`  cd ${folderName}`, colors.gray);
-    log(`  npm run serve`, colors.gray);
+    log(`  cd ${folderName}`, logColors.log);
+    log(`  npm run serve`, logColors.log);
     console.log();
-    log('Happy coding! 🎨', colors.green);
+    log('Happy coding! 🎨', logColors.success);
     console.log();
+    if (usedDeprecatedSource || usedDeprecatedGit) {
+      if (usedDeprecatedSource) {
+        warn('  The --source flag is deprecated. Use --sourceDir instead.');
+      }
+      if (usedDeprecatedGit) {
+        warn('  The --git flag is deprecated. Use --templateRepo instead.');
+      }
+      console.log();
+    }
 
   } catch (err) {
     console.log();
