@@ -85,4 +85,5 @@ if (!normalizedMaintainers.includes(whoami.toLowerCase())) {
   );
 }
 
-success(`You are logged in as ${whoami} (maintainer of ${packageName}).`);
+success(`You are logged in as \`${whoami}\` (maintainer of \`${packageName}\`).`);
+console.log('');
