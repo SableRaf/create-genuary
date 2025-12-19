@@ -122,6 +122,12 @@ describe('--sketchesDir argument', () => {
       parseArguments(['--sketchesDir']);
     }).toThrow('--sketchesDir requires a folder name');
   });
+
+  test('should reject path traversal for --sketchesDir', () => {
+    expect(() => {
+      parseArguments(['--sketchesDir', '../sensitive']);
+    }).toThrow('--sketchesDir must be a simple folder name without path separators or ".."');
+  });
 });
 
 describe('output folder validation', () => {

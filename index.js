@@ -97,6 +97,12 @@ export function parseArguments(argv = process.argv.slice(2)) {
       if (!sketchesPath) {
         throw new Error('--sketchesDir requires a folder name');
       }
+      // Validate that sketchesDir is a simple folder name to avoid path traversal
+      if (sketchesPath.includes('/') || sketchesPath.includes('\\') || sketchesPath.includes('..')) {
+        throw new Error(
+          '--sketchesDir must be a simple folder name without path separators or ".."'
+        );
+      }
       sketchesDir = sketchesPath;
     } else if (arg === '--' || arg.startsWith('--')) {
       // Skip npm's separator or unknown flags
