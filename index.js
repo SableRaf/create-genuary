@@ -6,6 +6,7 @@
  */
 
 import { resolve, normalize, isAbsolute, relative, sep } from 'path';
+import { fileURLToPath } from 'url';
 import { access } from 'fs/promises';
 import { fetchPrompts } from './src/prompts.js';
 import { scaffoldProject } from './src/scaffold.js';
@@ -331,6 +332,6 @@ async function main() {
 }
 
 // Only run main() when this file is executed directly, not when imported
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   main();
 }
