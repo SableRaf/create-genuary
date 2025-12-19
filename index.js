@@ -335,7 +335,7 @@ async function main() {
 // Only run main() when this file is executed directly, not when imported
 // When run via npm/npx, process.argv[1] may point to a symlink in node_modules/.bin
 // We need to resolve symlinks to compare the actual file paths
-const scriptPath = fileURLToPath(import.meta.url);
+const scriptPath = realpathSync(fileURLToPath(import.meta.url));
 let isExecutedDirectly = false;
 
 if (!process.argv[1]) {
