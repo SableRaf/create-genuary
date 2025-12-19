@@ -259,10 +259,10 @@ export async function scaffoldProject(
 
   if (templateCloned) {
     // Remove the example sketches folder from the template
-    const exampleSketchesPath = join(projectPath, projectsDir);
+    const defaultSketchesPath = join(projectPath, 'sketches');
     try {
-      await rm(exampleSketchesPath, { recursive: true, force: true });
-      info(`Removed example ${projectsDir} folder from template`);
+      await rm(defaultSketchesPath, { recursive: true, force: true });
+      info('Removed example sketches folder from template');
     } catch (error) {
       // Ignore if it doesn't exist
     }
