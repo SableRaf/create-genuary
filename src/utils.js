@@ -9,6 +9,15 @@ const ANSI = {
   gray: '\x1b[90m'
 };
 
+const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+
+// Wrapper around console.log that silences output in test environments
+function consoleLog(message) {
+  if (!isTestEnv) {
+    console.log(message);
+  }
+}
+
 // Color function factory
 const createColor = (code) => (text) => `${code}${text}${ANSI.reset}`;
 
@@ -38,23 +47,23 @@ function colorizeFlags(message, parentColorCode) {
 }
 
 function log(message, colorFn = (x) => x) {
-  console.log(colorFn(message));
+  consoleLog(colorFn(message));
 }
 
 function success(message) {
-  console.log(`${ANSI.green}✓ ${colorizeFlags(message, ANSI.green)}${ANSI.reset}`);
+  consoleLog(`${ANSI.green}✓ ${colorizeFlags(message, ANSI.green)}${ANSI.reset}`);
 }
 
 function info(message) {
-  console.log(`${ANSI.blue}${colorizeFlags(message, ANSI.blue)}${ANSI.reset}`);
+  consoleLog(`${ANSI.blue}${colorizeFlags(message, ANSI.blue)}${ANSI.reset}`);
 }
 
 function warn(message) {
-  console.log(`${ANSI.yellow}⚠ ${colorizeFlags(message, ANSI.yellow)}${ANSI.reset}`);
+  consoleLog(`${ANSI.yellow}⚠ ${colorizeFlags(message, ANSI.yellow)}${ANSI.reset}`);
 }
 
 function error(message) {
-  console.log(`${ANSI.red}✗ ${colorizeFlags(message, ANSI.red)}${ANSI.reset}`);
+  consoleLog(`${ANSI.red}✗ ${colorizeFlags(message, ANSI.red)}${ANSI.reset}`);
 }
 
 export { logColors, log, success, info, warn, error };
