@@ -1,5 +1,3 @@
-export { logColors, log, success, info, warn, error };
-
 // Minimal ANSI color utilities
 const ANSI = {
   reset: '\x1b[0m',
@@ -58,3 +56,5 @@ function warn(message) {
 function error(message) {
   console.log(`${ANSI.red}✗ ${colorizeFlags(message, ANSI.red)}${ANSI.reset}`);
 }
+
+export { logColors, log, success, info, warn, error };
