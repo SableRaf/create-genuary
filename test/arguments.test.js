@@ -6,7 +6,7 @@ describe('--sourceDir argument', () => {
     expect(() => {
       parseArguments([
         '--sourceDir', '/path/to/template',
-        '--git', 'user/repo',
+        '--templateRepo', 'user/repo',
         'output'
       ]);
     }).toThrow('Cannot use --sourceDir and --templateRepo together');
